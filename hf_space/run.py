@@ -232,46 +232,42 @@ def fork(run_id, top_k):
 
 HEADER = """# Forkwise \u00d7 EvidenceRAG: live demo
 
-Ask a real question over 120+ real ML papers. There is no chatbot and
-no canned demo data. **EvidenceRAG** (hybrid retrieval, cross-encoder
-reranking, extractive answers with document, page, and character
-citations) answers you, and **Forkwise** traces every step as it
-happens. Then it lets you rewind the run and re-run the reranking
-step with a different `top_k` to see exactly what changes.
+Ask a real question and watch a real system answer it. There is no
+chatbot and no canned demo data. **EvidenceRAG** answers from 120+
+ML papers, quoting the exact passages it used. **Forkwise** records
+every step of the run as it happens.
 
-*Honest fine print: free hosting sleeps when idle, which resets the
-trace log and rebuilds the paper index on wake (about 8 min). Costs
-read $0 because every model is open weights running locally. No paid
-APIs, which is itself one of the things the trace makes visible. It
-answers on CPU, a few seconds per question, so there is no GPU quota
-for visitors to run out of.*
+**How to try it:** ask a question below. Look at the trace under
+your answer. Then use the rewind box to re-run one step with a
+different setting and see what changes."""
 
+FINE_PRINT = """<small>Honest fine print: free hosting sleeps when
+idle, which resets the trace log and rebuilds the paper index on
+wake (about 8 min). Costs read $0 because every model is open
+weights running locally, no paid APIs. It answers on CPU, a few
+seconds per question, so there is no GPU quota to run out of.
 Code: [ForkWise](https://github.com/gowtamyreddy/ForkWise) \u00b7
-[EvidenceRAG](https://github.com/gowtamyreddy/evidencerag)
-"""
+[EvidenceRAG](https://github.com/gowtamyreddy/evidencerag)</small>"""
 
-with gr.Blocks(title="Forkwise x EvidenceRAG: Live") as demo:
+ANSWER_PLACEHOLDER = ("_Your answer will appear here, quoted word "
+                      "for word from the papers, with the page and "
+                      "characters it came from._")
+
+FORK_PLACEHOLDER = ("_After you ask a question, rewind its run here: "
+                    "keep fewer passages in the ranking step and see "
+                    "whether the answer changes._")
+
+with gr.Blocks(title="Forkwise x EvidenceRAG: Live",
+               theme=gr.themes.Soft(primary_hue="indigo",
+                                    neutral_hue="slate")) as demo:
     gr.Markdown(HEADER)
     counters = gr.Markdown(_counters())
+    gr.Markdown("### 1. Ask a question")
     question = gr.Textbox(
-        label="Ask the papers",
+        label="Your question about retrieval-augmented generation",
         placeholder="e.g. How many passages does the DPR knowledge "
                     "source contain?",
         lines=2)
-    ask_btn = gr.Button("Ask and trace it", variant="primary")
-    answer_md = gr.Markdown(label="Answer")
-    steps = gr.Dataframe(
-        headers=["Step", "Name", "Kind", "Model", "Latency (ms)", "Cost"],
-        datatype=["number", "str", "str", "str", "number", "str"],
-        label="Traced steps of this run", interactive=False)
-    with gr.Row():
-        run_id_state = gr.State("")
-        run_id_show = gr.Textbox(label="Run id (fork this run)",
-                                 interactive=False)
-        top_k = gr.Slider(1, 10, value=3, step=1,
-                          label="Fork from rerank with top_k")
-        fork_btn = gr.Button("Fork and replay")
-    fork_md = gr.Markdown(label="Fork result")
     gr.Examples(
         examples=[
             ["How many passages does the DPR knowledge source contain?"],
@@ -279,7 +275,32 @@ with gr.Blocks(title="Forkwise x EvidenceRAG: Live") as demo:
             ["How does RAPTOR organize retrieved text?"],
             ["What is the airspeed velocity of an unladen swallow?"],
         ],
-        inputs=question)
+        inputs=question, label="Or tap one of these")
+    ask_btn = gr.Button("Ask and trace it", variant="primary")
+    gr.Markdown("### 2. The answer, and the trace behind it")
+    answer_md = gr.Markdown(ANSWER_PLACEHOLDER, label="Answer")
+    steps = gr.Dataframe(
+        headers=["#", "Step", "Type", "Model", "Time (ms)", "Cost"],
+        datatype=["number", "str", "str", "str", "number", "str"],
+        label="Trace of this run: every step the system took",
+        interactive=False)
+    gr.Markdown("### 3. Rewind this run")
+    gr.Markdown(
+        "Re-run the ranking step keeping only the top few passages, "
+        "and Forkwise replays the rest of the run from its recording. "
+        "You see exactly which steps changed and whether the final "
+        "answer did.")
+    with gr.Row():
+        top_k = gr.Slider(1, 10, value=3, step=1,
+                          label="Keep this many passages (top_k)")
+        fork_btn = gr.Button("Re-run from the ranking step")
+    fork_md = gr.Markdown(FORK_PLACEHOLDER, label="Rewind result")
+    with gr.Accordion("Run details", open=False):
+        run_id_state = gr.State("")
+        run_id_show = gr.Textbox(
+            label="Run id of the last run (used by the rewind)",
+            interactive=False)
+    gr.Markdown(FINE_PRINT)
     ask_btn.click(ask, inputs=question,
                   outputs=[answer_md, steps, run_id_state, run_id_show,
                            counters], api_name="ask")
