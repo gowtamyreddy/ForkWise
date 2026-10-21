@@ -130,6 +130,7 @@ def run_detail(run_id: str):
     if run is None:
         raise HTTPException(404, "no such run")
     spans = store.get_spans(run_id)
+    imported = '"imported": true' in (run["meta_json"] or "")
     max_lat = max((s["latency_ms"] or 0 for s in spans), default=1) or 1
     rows = "".join(
         "<tr><td>{seq}</td><td>{name}</td><td>{kind}</td>"
@@ -141,6 +142,11 @@ def run_detail(run_id: str):
             tok=(("%s in / %s out" % (s["tokens_in"], s["tokens_out"]))
                  if s["tokens_in"] is not None else ""))
         for s in spans)
+    step_count_plus = len(spans) + 1
+    imported_note = ("<p><b>Imported run:</b> this trace came from a log file, "
+                     "so there is no live code to re-execute. Exact reproduction "
+                     "from the recording and the pytest export still work.</p>"
+                     if imported else "")
     return f"""<!doctype html><title>Run {run_id}</title><style>{STYLE}</style>
 <p><a href='/'>&larr; all runs</a></p>
 <h1>{run['name']}</h1>
@@ -151,8 +157,10 @@ ${run['total_cost_usd']:.6f} &middot; {run['latency_ms'] or 0:.0f} ms
 <p>output: <code>{(run['output_json'] or '')[:300]}</code></p>
 <table><tr><th>#</th><th>step</th><th>kind</th><th></th><th>latency</th><th>cost</th><th>tokens</th></tr>{rows}</table>
 <div class="card"><h3>Fork and replay</h3>
-<p>Re-run from a step: earlier steps are served from this recording,
-the chosen step runs live with your overrides (JSON), later steps run live.</p>
+{imported_note}<p>Re-run from a step: earlier steps are served from this recording,
+the chosen step runs live with your overrides (JSON), later steps run live.
+Setting From step to {step_count_plus} reproduces the run exactly from the
+recording, with no live code needed.</p>
 <label>From step <input id='seq' type='number' min='1' value='2'></label>
 <label>Overrides <input id='ovr' size='40' value='{{}}'></label>
 <button onclick='doReplay()'>Replay</button>

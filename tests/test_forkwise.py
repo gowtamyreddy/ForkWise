@@ -132,3 +132,24 @@ def test_budget_flags(tmp_path):
     stats = finops(tracer.store, run_cost_ceiling=0.00001)
     assert len(stats["over_budget"]) == 1
     assert "cost" in stats["over_budget"][0]["reasons"][0]
+
+
+def test_imported_run_reproduces_from_recording_without_code(tmp_path):
+    # No pipeline is registered on this tracer: live replay must refuse
+    # with a clear message, but exact reproduction from the recording
+    # (from_seq = last step + 1) must work.
+    tracer = Tracer(str(tmp_path / "t.db"))
+    fixture = (Path(__file__).resolve().parent.parent
+               / "demo" / "sample_traces.jsonl").read_text()
+    import_jsonl(tracer.store, fixture)
+    run = next(r for r in tracer.store.list_runs()
+               if r["name"] == "support-agent" and r["success"])
+    spans = tracer.store.get_spans(run["id"])
+    with pytest.raises(ValueError, match="no live code"):
+        replay_run(tracer, run["id"], from_seq=2)
+    new_run, diff = replay_run(tracer, run["id"], from_seq=len(spans) + 1)
+    assert diff["output_changed"] is False
+    assert diff["total_cost_delta"] == 0
+    assert all(step["from_recording"] for step in diff["steps"])
+    assert new_run["output_json"] == run["output_json"]
+    assert new_run["replay_of"] == run["id"]

@@ -24,12 +24,22 @@ def replay_run(tracer, run_id, from_seq, overrides=None):
                          f"from_seq must be in 1..{len(spans_by_seq) + 1} "
                          "(last+1 replays fully from the recording)")
     from .sdk import GLOBAL_PIPELINES
+    spans_list = tracer.store.get_spans(run_id)
+    if from_seq == len(spans_list) + 1:
+        # Full reproduction needs no live code: rebuild the run purely
+        # from the recording. This is what makes imported traces (and
+        # the pinned-pytest export) work anywhere.
+        return _reproduce_from_recording(tracer, original, spans_list), \
+            diff_runs(tracer, run_id, _last_run_id(tracer))
     raw_fn = tracer.registry.get("pipeline-fn:" + original["name"]) or \
         GLOBAL_PIPELINES.get(original["name"])
     if raw_fn is None:
         raise ValueError(
-            f"pipeline {original['name']!r} is not registered in this process; "
-            "import the module that defines it first")
+            f"This run has no live code loaded in this process (it was "
+            f"imported from logs, or its module is not imported), so it "
+            f"cannot be re-executed live. Two things still work: exact "
+            f"reproduction from the recording (set From step to "
+            f"{len(spans_list) + 1}) and the pytest export.")
     run_input = (json.loads(original["input_json"]) if original["input_json"]
                  else {"args": [], "kwargs": {}})
     replay = {"run_id": run_id, "from_seq": from_seq,
@@ -71,3 +81,34 @@ def diff_runs(tracer, original_id, replay_id):
         "total_latency_delta_ms": round((n_run["latency_ms"] or 0) - (o_run["latency_ms"] or 0), 2),
         "output_changed": (o_run["output_json"] or "") != (n_run["output_json"] or ""),
     }
+
+
+def _last_run_id(tracer):
+    return tracer.store.list_runs(limit=1)[0]["id"]
+
+
+def _reproduce_from_recording(tracer, original, spans_list):
+    import time as _time
+    store = tracer.store
+    new_id = store.create_run(
+        original["name"],
+        input_obj=json.loads(original["input_json"]) if original["input_json"] else None,
+        replay_of=original["id"],
+        replay_from_seq=len(spans_list) + 1)
+    for span in spans_list:
+        store.add_span({
+            "id": store.new_id(), "run_id": new_id,
+            "parent_id": span["parent_id"], "seq": span["seq"],
+            "name": span["name"], "kind": span["kind"],
+            "started_at": span["started_at"], "ended_at": span["ended_at"],
+            "latency_ms": span["latency_ms"],
+            "input": json.loads(span["input_json"]) if span["input_json"] else None,
+            "output": json.loads(span["output_json"]) if span["output_json"] else None,
+            "error": span["error"], "model": span["model"],
+            "tokens_in": span["tokens_in"], "tokens_out": span["tokens_out"],
+            "cost_usd": span["cost_usd"], "priced": span["priced"],
+            "attrs": {"from_recording": True}})
+    output = json.loads(original["output_json"]) if original["output_json"] else None
+    store.finish_run(new_id, original["status"], original["success"], output,
+                     _time.time(), original["latency_ms"])
+    return store.get_run(new_id)
