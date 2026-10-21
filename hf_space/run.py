@@ -163,6 +163,9 @@ def ask(question):
     try:
         result = evidencerag_live(question)
     except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        print("ASK-FAILURE-DIAGNOSTIC: %r" % (exc,), flush=True)
         if _is_quota_error(exc):
             return (QUOTA_MSG, [], "", "", _counters())
         raise
