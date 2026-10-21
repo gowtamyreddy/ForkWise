@@ -123,24 +123,48 @@ def _counters():
     return md
 
 
-@spaces.GPU(duration=120)
+QUOTA_MSG = (
+    "**The demo's free GPU quota is used up for now.** Hugging Face "
+    "gives free Spaces a small daily GPU budget; it resets daily. "
+    "Signing in with a free Hugging Face account gives you your own "
+    "allowance — or run the whole thing locally from GitHub (the "
+    "repo's live mode does exactly what this page does): "
+    "https://github.com/gowtamyreddy/ForkWise")
+
+
+def _is_quota_error(exc):
+    text = str(exc).lower()
+    return "quota" in text or "zerogpu" in text
+
+
+@spaces.GPU(duration=60)
 def ask(question):
     question = (question or "").strip()
     if not question:
         return ("Type a question about retrieval-augmented generation "
                 "first.", [], "", "", _counters())
-    result = evidencerag_live(question)
+    try:
+        result = evidencerag_live(question)
+    except Exception as exc:
+        if _is_quota_error(exc):
+            return (QUOTA_MSG, [], "", "", _counters())
+        raise
     run = tracer.store.list_runs(limit=1)[0]
     return (_fmt_answer(result), _steps_rows(run["id"]), run["id"],
             run["id"][:8], _counters())
 
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=60)
 def fork(run_id, top_k):
     if not run_id:
         return ("Ask a question first — then you can fork its run.",
                 [], _counters())
-    new_run, diff = replay_run(tracer, run_id, 2, {"top_k": int(top_k)})
+    try:
+        new_run, diff = replay_run(tracer, run_id, 2, {"top_k": int(top_k)})
+    except Exception as exc:
+        if _is_quota_error(exc):
+            return (QUOTA_MSG, [], _counters())
+        raise
     lines = ["**Forked run %s from step 2 (rerank) with top_k=%d.**"
              % (new_run["id"][:8], int(top_k)), ""]
     for s in diff["steps"]:
