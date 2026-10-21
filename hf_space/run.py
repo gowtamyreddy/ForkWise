@@ -57,6 +57,17 @@ def _boot():
 _boot()
 
 
+@spaces.GPU(duration=10)
+def _gpu_slot():
+    """Defined so this Space stays schedulable on ZeroGPU hardware.
+
+    It is never called from a visitor interaction: the demo's models
+    are small enough to answer on CPU, so no click can ever spend —
+    or exhaust — GPU quota.
+    """
+    return True
+
+
 @tracer.step(kind="retriever")
 def retrieve(question):
     return _evr._retriever.hybrid_search(question, top_k=20)
@@ -137,7 +148,6 @@ def _is_quota_error(exc):
     return "quota" in text or "zerogpu" in text
 
 
-@spaces.GPU(duration=60)
 def ask(question):
     question = (question or "").strip()
     if not question:
@@ -154,7 +164,6 @@ def ask(question):
             run["id"][:8], _counters())
 
 
-@spaces.GPU(duration=60)
 def fork(run_id, top_k):
     if not run_id:
         return ("Ask a question first — then you can fork its run.",
@@ -199,7 +208,7 @@ different `top_k` to see exactly what changes.
 *Honest fine print: free hosting sleeps when idle, which resets the
 trace log and rebuilds the paper index on wake (~8 min). Costs read
 $0 because every model is open weights running locally — no paid
-APIs, which is itself one of the things the trace makes visible.*
+APIs, which is itself one of the things the trace makes visible. It answers on CPU — a few seconds per question — so there is no GPU quota for visitors to run out of.*
 
 Code: [ForkWise](https://github.com/gowtamyreddy/ForkWise) ·
 [EvidenceRAG](https://github.com/gowtamyreddy/evidencerag)
