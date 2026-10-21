@@ -13,9 +13,16 @@ Boot: if the paper index is missing, fetch the corpus and build it
 Space). Free-tier storage is ephemeral, so the trace log resets when
 the Space sleeps; that is stated in the UI rather than hidden.
 """
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+# ZeroGPU presents a virtual GPU, and sentence-transformers auto-selects
+# CUDA when one is visible — which trips the ZeroGPU quota gate from inside
+# a request. This demo is CPU-only by design: hide the GPU from torch
+# before any library imports it.
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
