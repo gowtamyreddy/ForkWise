@@ -40,6 +40,7 @@ tracer = Tracer(DB_PATH)
 _evr = None
 _rerank_module = None
 _answer_module = None
+_reranker = None
 
 
 def _boot():
@@ -53,11 +54,34 @@ def _boot():
                            cwd=str(ROOT), check=True)
     from app import main as evr_app
     from src import answer as answer_module
+    from src import embed as embed_module
     from src import rerank as rerank_module
+    # The embedder has the same disease as the reranker, silently:
+    # built at startup, it auto-selects ZeroGPU's emulated CUDA
+    # device and then produces wrong vectors at query time (junk
+    # retrieval, every answer refused). Force its model class to
+    # CPU before startup constructs it.
+    import sentence_transformers as _st
+
+    class _CPUSentenceTransformer(_st.SentenceTransformer):
+        def __init__(self, *args, **kwargs):
+            kwargs["device"] = "cpu"
+            super().__init__(*args, **kwargs)
+
+    embed_module.SentenceTransformer = _CPUSentenceTransformer
     if evr_app._retriever is None:
         evr_app.startup()
     _evr, _rerank_module, _answer_module = (
         evr_app, rerank_module, answer_module)
+    # ZeroGPU presents an emulated CUDA device, and CrossEncoder
+    # captures it as its target device at construction; predict()
+    # then calls model.to(cuda) on every call, which reaches a raw
+    # CUDA init outside any GPU allocation and dies. Pin the
+    # reranker's target device to CPU.
+    import torch
+    global _reranker
+    _reranker = rerank_module.Reranker()
+    _reranker.model._target_device = torch.device("cpu")
     print("boot: EvidenceRAG ready; Forkwise tracing is live.", flush=True)
 
 
@@ -83,7 +107,7 @@ def retrieve(question):
 @tracer.step(kind="ml")
 def rerank(question, candidates, top_k=5):
     return _rerank_module.rerank(
-        question, candidates, _evr._get_reranker(), top_k)
+        question, candidates, _reranker, top_k)
 
 
 @tracer.step(kind="rule")
@@ -256,12 +280,12 @@ with gr.Blocks(title="Forkwise x EvidenceRAG — Live") as demo:
         inputs=question)
     ask_btn.click(ask, inputs=question,
                   outputs=[answer_md, steps, run_id_state, run_id_show,
-                           counters])
+                           counters], api_name="ask")
     question.submit(ask, inputs=question,
                     outputs=[answer_md, steps, run_id_state, run_id_show,
                              counters])
     fork_btn.click(fork, inputs=[run_id_state, top_k],
-                   outputs=[fork_md, steps, counters])
+                   outputs=[fork_md, steps, counters], api_name="fork")
 
 if __name__ == "__main__":
     demo.queue()
