@@ -109,3 +109,22 @@ python -m pytest tests/ -q   # 8 tests: tracing, cost math, fork semantics,
 ## License
 
 MIT.
+
+## Live mode: trace a real system, not seed data
+
+`demo/live_qa.py` wires Forkwise into the real
+[EvidenceRAG](https://github.com/gowtamyreddy/evidencerag) pipeline
+(hybrid retrieval -> cross-encoder rerank -> extractive answer):
+
+```bash
+python demo/live_qa.py   # dashboard + live endpoint on :8001
+curl -X POST localhost:8001/ask -H "Content-Type: application/json" \
+  -d '{"question": "How many passages does the DPR knowledge source contain?"}'
+```
+
+Every question becomes a traced run in the same database the dashboard
+reads, so the runs list, FinOps totals, and fork-and-diff replay fill
+up with live traffic. The rerank step takes a `top_k` argument, so a
+live run can be forked from the dashboard's replay box with a different
+`top_k`. Set `EVIDENCERAG_HOME` if the EvidenceRAG repo is not a
+sibling directory.
