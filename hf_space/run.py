@@ -126,20 +126,37 @@ def evidencerag_live(question):
 
 
 def _fmt_answer(result):
-    if result.get("status") != "answered":
-        return ("**Insufficient evidence.** The best-matching passage "
-                "scored below the answer threshold, so EvidenceRAG "
-                "refused rather than guess. Forkwise recorded the "
-                "run as a failure, which is what a real trace log should "
-                "do with a refusal.")
-    parts = []
-    for span in result["spans"]:
-        cite = span["citation"]
-        parts.append("> %s" % span["text"])
-        parts.append("*— %s, page %s, chars %s–%s, score %s*" % (
-            cite["doc_id"], cite["page"], cite["char_start"],
-            cite["char_end"], round(cite["score"], 3)))
-    return "\n\n".join(parts)
+    """Render an EvidenceRAG answer as an ANSWER, not a citation dump.
+
+    EvidenceRAG never writes its own sentences; the verbatim quote IS
+    the answer. Say so plainly, lead with the quote, and put the
+    source in one calm line underneath each passage.
+    """
+    if result.get("status") != "answered" or not result.get("spans"):
+        return ("**No answer this time.** The papers in the index do "
+                "not contain a passage that answers this question "
+                "confidently, so the system refused rather than guess. "
+                "Forkwise recorded the run as a failure, which is what "
+                "a real trace log should do with a refusal.")
+    spans = result["spans"]
+    if len(spans) == 1:
+        parts = ["**The answer, in the paper's own words:**", ""]
+    else:
+        parts = ["**The answer, in the papers' own words** "
+                 "(%d passages):" % len(spans), ""]
+    for i, sp in enumerate(spans, 1):
+        cit = sp["citation"]
+        if len(spans) > 1:
+            parts.append("**Passage %d**" % i)
+        parts.append("> " + sp["text"])
+        parts.append("")
+        parts.append(
+            "<small>Source: arXiv %s, page %s (characters %s to %s), "
+            "match score %s</small>" % (
+                cit["doc_id"], cit["page"], cit["char_start"],
+                cit["char_end"], round(cit["score"], 3)))
+        parts.append("")
+    return "\n".join(parts).strip()
 
 
 def _steps_rows(run_id):
