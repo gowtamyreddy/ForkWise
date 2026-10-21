@@ -1,4 +1,4 @@
-"""Forkwise x EvidenceRAG — the LIVE demo.
+"""Forkwise x EvidenceRAG: the LIVE demo.
 
 A real question-answering system (EvidenceRAG: hybrid retrieval ->
 cross-encoder rerank -> extractive answer with citations, over 120+
@@ -9,7 +9,7 @@ be forked at the rerank step with a different top_k to see exactly
 what changes.
 
 Boot: if the paper index is missing, fetch the corpus and build it
-(blocking, before the UI opens — the same recipe as the EvidenceRAG
+(blocking, before the UI opens; the same recipe as the EvidenceRAG
 Space). Free-tier storage is ephemeral, so the trace log resets when
 the Space sleeps; that is stated in the UI rather than hidden.
 """
@@ -93,8 +93,8 @@ def _gpu_slot():
     """Defined so this Space stays schedulable on ZeroGPU hardware.
 
     It is never called from a visitor interaction: the demo's models
-    are small enough to answer on CPU, so no click can ever spend —
-    or exhaust — GPU quota.
+    are small enough to answer on CPU, so no click can ever spend or
+    exhaust GPU quota.
     """
     return True
 
@@ -129,7 +129,7 @@ def _fmt_answer(result):
     if result.get("status") != "answered":
         return ("**Insufficient evidence.** The best-matching passage "
                 "scored below the answer threshold, so EvidenceRAG "
-                "refused rather than guess — and Forkwise recorded the "
+                "refused rather than guess. Forkwise recorded the "
                 "run as a failure, which is what a real trace log should "
                 "do with a refusal.")
     parts = []
@@ -169,7 +169,7 @@ QUOTA_MSG = (
     "**The demo's free GPU quota is used up for now.** Hugging Face "
     "gives free Spaces a small daily GPU budget; it resets daily. "
     "Signing in with a free Hugging Face account gives you your own "
-    "allowance — or run the whole thing locally from GitHub (the "
+    "allowance. Or run the whole thing locally from GitHub (the "
     "repo's live mode does exactly what this page does): "
     "https://github.com/gowtamyreddy/ForkWise")
 
@@ -200,7 +200,7 @@ def ask(question):
 
 def fork(run_id, top_k):
     if not run_id:
-        return ("Ask a question first — then you can fork its run.",
+        return ("Ask a question first, then you can fork its run.",
                 [], _counters())
     try:
         new_run, diff = replay_run(tracer, run_id, 2, {"top_k": int(top_k)})
@@ -212,10 +212,10 @@ def fork(run_id, top_k):
              % (new_run["id"][:8], int(top_k)), ""]
     for s in diff["steps"]:
         if s["from_recording"]:
-            lines.append("- Step %d %s — served from the recording "
+            lines.append("- Step %d %s: served from the recording "
                          "(not re-run)" % (s["seq"], s["name"]))
         else:
-            lines.append("- Step %d %s — re-run live, output %s"
+            lines.append("- Step %d %s: re-run live, output %s"
                          % (s["seq"], s["name"],
                             "CHANGED" if s["output_changed"] else "same"))
     lines.append("")
@@ -230,25 +230,27 @@ def fork(run_id, top_k):
     return ("\n".join(lines), _steps_rows(new_run["id"]), _counters())
 
 
-HEADER = """# Forkwise × EvidenceRAG — live
+HEADER = """# Forkwise \u00d7 EvidenceRAG: live demo
 
 Ask a real question over 120+ real ML papers. There is no chatbot and
-no canned demo data: **EvidenceRAG** (hybrid retrieval → cross-encoder
-reranking → extractive answers with document/page/character citations)
-answers you, and **Forkwise** traces every step as it happens — then
-lets you rewind the run and re-run the reranking step with a
-different `top_k` to see exactly what changes.
+no canned demo data. **EvidenceRAG** (hybrid retrieval, cross-encoder
+reranking, extractive answers with document, page, and character
+citations) answers you, and **Forkwise** traces every step as it
+happens. Then it lets you rewind the run and re-run the reranking
+step with a different `top_k` to see exactly what changes.
 
 *Honest fine print: free hosting sleeps when idle, which resets the
-trace log and rebuilds the paper index on wake (~8 min). Costs read
-$0 because every model is open weights running locally — no paid
-APIs, which is itself one of the things the trace makes visible. It answers on CPU — a few seconds per question — so there is no GPU quota for visitors to run out of.*
+trace log and rebuilds the paper index on wake (about 8 min). Costs
+read $0 because every model is open weights running locally. No paid
+APIs, which is itself one of the things the trace makes visible. It
+answers on CPU, a few seconds per question, so there is no GPU quota
+for visitors to run out of.*
 
-Code: [ForkWise](https://github.com/gowtamyreddy/ForkWise) ·
+Code: [ForkWise](https://github.com/gowtamyreddy/ForkWise) \u00b7
 [EvidenceRAG](https://github.com/gowtamyreddy/evidencerag)
 """
 
-with gr.Blocks(title="Forkwise x EvidenceRAG — Live") as demo:
+with gr.Blocks(title="Forkwise x EvidenceRAG: Live") as demo:
     gr.Markdown(HEADER)
     counters = gr.Markdown(_counters())
     question = gr.Textbox(
@@ -256,7 +258,7 @@ with gr.Blocks(title="Forkwise x EvidenceRAG — Live") as demo:
         placeholder="e.g. How many passages does the DPR knowledge "
                     "source contain?",
         lines=2)
-    ask_btn = gr.Button("Ask — and trace it", variant="primary")
+    ask_btn = gr.Button("Ask and trace it", variant="primary")
     answer_md = gr.Markdown(label="Answer")
     steps = gr.Dataframe(
         headers=["Step", "Name", "Kind", "Model", "Latency (ms)", "Cost"],
