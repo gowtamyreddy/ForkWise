@@ -4,7 +4,23 @@
 
 Forkwise answers three questions about any agent you run: *what did it do, what did it cost, and what happens if I change this one step?* It is one `pip install`, one decorator, and one SQLite file. No account, no servers to run, no retention limit, no framework required.
 
-> Working name. (The obvious name in this space belongs to an existing company; this project is unaffiliated.)
+> The obvious name in this space belongs to an existing company; this project is unaffiliated.
+
+![Forkwise architecture](docs/images/architecture.png)
+
+## See it
+
+The dashboard — every run, its outcome, cost, and latency, with FinOps totals on top:
+
+![Forkwise dashboard](docs/images/dashboard.png)
+
+A single run, with one step's inspector open (these are the recorded inputs a fork can override):
+
+![Run detail with span inspector](docs/images/run_detail.png)
+
+Fork-and-diff: the same run re-executed from step 3 with the answer style overridden — steps 1–2 served from the recording, the changed step and everything after it live, final output CHANGED:
+
+![Fork and diff](docs/images/fork_diff.png)
 
 ## Why this exists
 
@@ -84,7 +100,7 @@ curl -X POST localhost:8000/api/import --data-binary @demo/sample_traces.jsonl
 ## Tests
 
 ```bash
-python -m pytest tests/ -q   # 7 tests: tracing, cost math, fork semantics,
+python -m pytest tests/ -q   # 8 tests: tracing, cost math, fork semantics,
                              # full-replay reproduction, failure waste,
                              # import + retry waste, exported-test validity,
                              # budget flags
