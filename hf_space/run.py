@@ -259,7 +259,8 @@ FORK_PLACEHOLDER = ("_After you ask a question, rewind its run here: "
 
 with gr.Blocks(title="Forkwise x EvidenceRAG: Live",
                theme=gr.themes.Soft(primary_hue="indigo",
-                                    neutral_hue="slate")) as demo:
+                                    neutral_hue="slate"),
+               css=".footer {display: none !important}") as demo:
     gr.Markdown(HEADER)
     counters = gr.Markdown(_counters())
     gr.Markdown("### 1. Ask a question")
