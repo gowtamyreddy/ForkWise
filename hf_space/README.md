@@ -1,7 +1,7 @@
 ---
-title: Forkwise
-emoji: "\U0001F500"
-colorFrom: blue
+title: Forkwise x EvidenceRAG — Live
+emoji: 🔀
+colorFrom: indigo
 colorTo: green
 sdk: gradio
 sdk_version: 5.49.1
@@ -10,8 +10,12 @@ pinned: false
 license: mit
 ---
 
-# Forkwise
+# Forkwise × EvidenceRAG — Live
 
-Local-first observability, fork-and-diff replay, and cost analytics for
-plain-Python AI agents. Code and full dashboard:
-https://github.com/gowtamyreddy/ForkWise
+A live demo with no seed data: ask real questions over 120+ real ML
+papers. EvidenceRAG answers with verbatim quotes and citations;
+Forkwise traces every step as it happens and lets you fork a run at
+the reranking step with a different top_k to see what changes.
+
+Code: https://github.com/gowtamyreddy/ForkWise ·
+https://github.com/gowtamyreddy/evidencerag

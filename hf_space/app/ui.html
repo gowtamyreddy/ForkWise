@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EvidenceRAG — Document QA with provable citations</title>
+<meta name="description" content="Ask questions over a paper corpus and get quoted answers with exact citations. Hybrid retrieval, cross-encoder reranking, golden-set evaluation, and honest refusal when the evidence is not there.">
+<style>
+  :root {
+    --bg: #f7f8fa; --surface: #ffffff; --surface2: #f1f3f7;
+    --text: #14181f; --muted: #5b6472; --border: #dde1e8;
+    --accent: #1d4ed8; --accent-soft: #e3ebfd;
+    --good: #15803d; --good-soft: #dcf3e3;
+    --bad: #b91c1c; --bad-soft: #fbe3e3;
+    --shadow: 0 1px 3px rgba(16,24,40,.08), 0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0e12; --surface: #15181f; --surface2: #1b1f28;
+      --text: #e8ebf1; --muted: #9aa3b2; --border: #262b36;
+      --accent: #6d9bff; --accent-soft: #1c2a4d;
+      --good: #4ade80; --good-soft: #123324;
+      --bad: #f87171; --bad-soft: #3a1717;
+      --shadow: 0 1px 3px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         line-height: 1.55; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px 48px; }
+
+  header.top { display: flex; align-items: center; justify-content: space-between;
+               padding: 20px 0 8px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 38px; height: 38px; border-radius: 10px; background: var(--accent);
+          color: #fff; display: flex; align-items: center; justify-content: center;
+          font-weight: 800; font-size: 18px; letter-spacing: -.5px; }
+  .brand h1 { font-size: 21px; margin: 0; letter-spacing: -.3px; }
+  .brand .tag { font-size: 12.5px; color: var(--muted); margin: 0; }
+  .gh { font-size: 13.5px; text-decoration: none; border: 1px solid var(--border);
+        padding: 7px 13px; border-radius: 999px; color: var(--text); background: var(--surface); }
+  .gh:hover { border-color: var(--accent); color: var(--accent); }
+
+  .hero { padding: 26px 0 6px; }
+  .hero h2 { font-size: 31px; line-height: 1.2; letter-spacing: -.6px; margin: 0 0 10px; max-width: 700px; }
+  .hero p { color: var(--muted); font-size: 16px; margin: 0; max-width: 720px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 4px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+          padding: 10px 16px; min-width: 120px; }
+  .stat b { display: block; font-size: 19px; letter-spacing: -.3px; }
+  .stat span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+          box-shadow: var(--shadow); padding: 20px; margin-top: 20px; }
+  .card h3 { margin: 0 0 4px; font-size: 16.5px; letter-spacing: -.2px; }
+  .card .desc { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+
+  form.ask { display: flex; gap: 8px; }
+  form.ask input { flex: 1; padding: 13px 14px; font-size: 16px; border: 1px solid var(--border);
+                   border-radius: 10px; background: var(--surface); color: var(--text); min-width: 0; }
+  form.ask input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  button { padding: 12px 18px; font-size: 15px; font-weight: 600; border: 0; border-radius: 10px;
+           background: var(--accent); color: #fff; cursor: pointer; white-space: nowrap; }
+  button:disabled { opacity: .55; cursor: default; }
+  button.ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
+  .chip { font-size: 13.5px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+          background: var(--surface2); cursor: pointer; color: var(--text); }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .toggle { margin-left: auto; font-size: 13.5px; color: var(--muted); display: flex;
+            align-items: center; gap: 7px; cursor: pointer; user-select: none; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px; border-radius: 999px;
+           font-size: 13px; font-weight: 700; }
+  .badge.ok { background: var(--good-soft); color: var(--good); }
+  .badge.refused { background: var(--bad-soft); color: var(--bad); }
+  .span { border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px;
+          padding: 13px 16px; margin-top: 12px; background: var(--surface); }
+  .span .quote { font-style: italic; margin: 0 0 7px; font-size: 15.5px; }
+  .cite { font-size: 12.5px; color: var(--muted); margin: 0; }
+  .cite code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); }
+  .meta { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+  .error { color: var(--bad); margin-top: 12px; font-size: 14px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+  .row { display: flex; gap: 8px; }
+  .row input[type=text] { flex: 1; padding: 11px 12px; font-size: 14.5px; border: 1px solid var(--border);
+                          border-radius: 10px; background: var(--surface); color: var(--text); min-width: 0; }
+  .row input[type=file] { flex: 1; font-size: 14px; padding: 9px 0; min-width: 0; }
+  table.metrics { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.metrics th, table.metrics td { text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+  table.metrics th:first-child, table.metrics td:first-child { text-align: left; }
+  table.metrics tr:last-child td { border-bottom: 0; }
+  .pipe { font-size: 13.5px; color: var(--muted); margin: 0; padding-left: 18px; }
+  .pipe li { margin: 3px 0; }
+  footer { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--border);
+           font-size: 13px; color: var(--muted); display: flex; justify-content: space-between;
+           flex-wrap: wrap; gap: 8px; }
+  .source-btn { margin-top: 8px; font-size: 13px; padding: 6px 12px; border-radius: 999px;
+                background: var(--accent-soft); color: var(--accent); font-weight: 600;
+                border: 0; cursor: pointer; }
+  .drawer-veil { position: fixed; inset: 0; background: rgba(0,0,0,.35); opacity: 0;
+                 pointer-events: none; transition: opacity .2s; z-index: 40; }
+  .drawer-veil.open { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; right: 0; height: 100dvh; width: min(480px, 94vw);
+            background: var(--surface); border-left: 1px solid var(--border); z-index: 41;
+            transform: translateX(102%); transition: transform .24s ease;
+            display: flex; flex-direction: column; }
+  .drawer.open { transform: translateX(0); }
+  .drawer header { padding: 16px 20px; border-bottom: 1px solid var(--border);
+                   display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .drawer header h3 { margin: 0; font-size: 16px; }
+  .drawer .body { padding: 16px 20px; overflow-y: auto; font-size: 14.5px; }
+  .drawer .docline { font-size: 12.5px; color: var(--muted); margin: 0 0 12px; }
+  .drawer .docline code { font-family: ui-monospace, Menlo, monospace; color: var(--text); }
+  .drawer mark { background: #fef08a; color: inherit; border-radius: 3px; padding: 1px 2px; }
+  @media (prefers-color-scheme: dark) { .drawer mark { background: #713f12; } }
+  .close-x { border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+             border-radius: 999px; width: 30px; height: 30px; font-size: 15px; cursor: pointer;
+             display: flex; align-items: center; justify-content: center; padding: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo">E</div>
+      <div>
+        <h1>EvidenceRAG</h1>
+        <p class="tag">Document QA with provable citations</p>
+      </div>
+    </div>
+    <a class="gh" href="https://github.com/gowtamyreddy/evidencerag" target="_blank" rel="noopener">View on GitHub</a>
+  </header>
+
+  <section class="hero">
+    <h2>Ask a question. Get an answer you can check.</h2>
+    <p>Every answer is a quoted span from the corpus with an exact citation — document, page, and character offsets. If the evidence is not there, the system says so instead of guessing.</p>
+    <div class="stats">
+      <div class="stat"><b id="statDocs">–</b><span>documents</span></div>
+      <div class="stat"><b id="statChunks">–</b><span>chunks indexed</span></div>
+      <div class="stat"><b id="statCorpus">–</b><span>corpus</span></div>
+      <div class="stat"><b id="health">…</b><span>status</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <form class="ask" id="ask">
+      <input type="text" id="q" placeholder="Ask a question about the papers…" autocomplete="off">
+      <button type="button" id="mic" title="Ask by voice (Whisper, on-device)">🎙 Speak</button>
+      <button type="submit" id="go">Ask</button>
+    </form>
+    <div class="chips">
+      <button type="button" class="chip" data-q="What problem does retrieval-augmented generation solve?">What problem does RAG solve?</button>
+      <button type="button" class="chip" data-q="How does RAGAS evaluate RAG pipelines without references?">How does RAGAS evaluate?</button>
+      <button type="button" class="chip" data-q="How do Self-RAG and RAPTOR differ in how they get context into the generator?">Self-RAG vs RAPTOR</button>
+      <button type="button" class="chip" data-q="What is the capital of France?">An unanswerable question</button>
+      <label class="toggle"><input type="checkbox" id="rerankToggle" checked> Cross-encoder rerank</label>
+    </div>
+    <div id="out"></div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h3>Bring your own papers</h3>
+      <p class="desc">Upload a .zip of PDFs to replace the corpus, or paste a link to add one document. The same pipeline (chunk → embed → FAISS → rerank) rebuilds the index live.</p>
+      <form id="uploadForm" class="row">
+        <input type="file" id="zipfile" accept=".zip">
+        <button type="submit" id="uploadBtn">Replace corpus</button>
+      </form>
+      <form id="fetchForm" class="row" style="margin-top:10px">
+        <input type="text" id="fetchUrl" placeholder="…or paste a PDF or page URL" autocomplete="off">
+        <button type="submit" id="fetchBtn" class="ghost">Add URL</button>
+      </form>
+      <p class="meta" id="uploadStatus"></p>
+      <button id="resetBtn" class="ghost" style="display:none; margin-top:6px; padding:8px 14px">Reset to built-in corpus</button>
+    </section>
+
+    <section class="card">
+      <h3>Measured quality</h3>
+      <p class="desc">Golden-set evaluation on 18 hand-written questions (16 answerable, 2 designed to be refused). The reranker was added after a failure analysis of the three rank-1 misses — these are the before/after numbers.</p>
+      <table class="metrics">
+        <tr><th>Metric</th><th>Stage 1 only</th><th>+ Rerank</th></tr>
+        <tr><td>hit@1</td><td>0.81</td><td><b>1.00</b></td></tr>
+        <tr><td>MRR</td><td>0.89</td><td><b>1.00</b></td></tr>
+        <tr><td>Citation precision</td><td>0.86</td><td><b>0.99</b></td></tr>
+      </table>
+      <h3 style="margin-top:18px">How it works</h3>
+      <ol class="pipe">
+        <li>PDFs are chunked with page + offset provenance (500 chars, 100 overlap)</li>
+        <li>Hybrid retrieval: dense (MiniLM + FAISS) and BM25, fused with RRF</li>
+        <li>Cross-encoder reranks the fused top-20 by joint relevance</li>
+        <li>Answers are quoted sentences; below threshold → “insufficient evidence”</li>
+      </ol>
+    </section>
+  </div>
+
+  <footer>
+    <span>EvidenceRAG · FastAPI · FAISS · sentence-transformers · faster-whisper · cross-encoder rerank</span>
+    <span><a href="https://github.com/gowtamyreddy/evidencerag" target="_blank" rel="noopener">github.com/gowtamyreddy/evidencerag</a></span>
+  </footer>
+</div>
+
+<div class="drawer-veil" id="drawerVeil"></div>
+<aside class="drawer" id="drawer" aria-label="Source context">
+  <header>
+    <h3>Source context</h3>
+    <button class="close-x" id="drawerClose" aria-label="Close">✕</button>
+  </header>
+  <div class="body" id="drawerBody"></div>
+</aside>
+
+<script>
+const out = document.getElementById('out');
+const btn = document.getElementById('go');
+const input = document.getElementById('q');
+
+async function showHealth() {
+  try {
+    const r = await fetch('/health');
+    const h = await r.json();
+    document.getElementById('statDocs').textContent = h.docs.length;
+    document.getElementById('statChunks').textContent = h.chunks.toLocaleString();
+    document.getElementById('statCorpus').textContent = h.corpus === 'upload' ? 'Your papers' : 'Built-in';
+    document.getElementById('health').textContent = h.building ? 'Building…' : 'Live';
+    document.getElementById('resetBtn').style.display = h.corpus === 'upload' ? '' : 'none';
+  } catch (e) {
+    document.getElementById('health').textContent = 'Offline';
+  }
+}
+
+let pollTimer = null;
+async function pollStatus() {
+  try {
+    const r = await fetch('/upload/status');
+    const s = await r.json();
+    const el = document.getElementById('uploadStatus');
+    if (s.error) {
+      el.textContent = 'Build failed: ' + s.error;
+    } else if (!s.building) {
+      el.textContent = `Active corpus: ${s.corpus} — ${s.docs.length} documents, ${s.chunks.toLocaleString()} chunks.`;
+    }
+    showHealth();
+    if (!s.building && pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  } catch (e) { /* keep polling */ }
+}
+
+document.getElementById('uploadForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = document.getElementById('zipfile').files[0];
+  const el = document.getElementById('uploadStatus');
+  if (!f) { el.textContent = 'Pick a .zip file first.'; return; }
+  const fd = new FormData();
+  fd.append('file', f);
+  el.textContent = 'Uploading…';
+  try {
+    const r = await fetch('/upload', {method: 'POST', body: fd});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+    el.textContent = `Building index for ${d.docs.length} papers (embedding takes ~10s per paper)…`;
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(pollStatus, 2000);
+  } catch (err) {
+    el.textContent = 'Upload failed: ' + err.message;
+  }
+});
+
+document.getElementById('fetchForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const url = document.getElementById('fetchUrl').value.trim();
+  const el = document.getElementById('uploadStatus');
+  if (!url) { el.textContent = 'Paste a URL first.'; return; }
+  el.textContent = 'Fetching ' + url + '…';
+  try {
+    const r = await fetch('/fetch', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url})
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+    el.textContent = `Added "${d.doc}" — building index (embedding takes ~10s per document)…`;
+    document.getElementById('fetchUrl').value = '';
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(pollStatus, 2000);
+  } catch (err) {
+    el.textContent = 'Fetch failed: ' + err.message;
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  await fetch('/corpus/reset', {method: 'POST'});
+  document.getElementById('uploadStatus').textContent = 'Back to the built-in corpus.';
+  showHealth();
+});
+
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let lastSpans = [];
+
+function openSource(idx) {
+  const span = lastSpans[idx];
+  if (!span) return;
+  const c = span.citation;
+  const text = span.chunk_text;
+  const marked = esc(text.slice(0, span.rel_start)) +
+    '<mark>' + esc(text.slice(span.rel_start, span.rel_end)) + '</mark>' +
+    esc(text.slice(span.rel_end));
+  document.getElementById('drawerBody').innerHTML =
+    `<p class="docline">Document <code>${esc(c.doc_id)}</code> · page ${c.page} · ` +
+    `chars ${c.char_start}–${c.char_end} of the page · sentence score ${c.score.toFixed(3)}</p>` +
+    `<p style="margin:0">${marked}</p>` +
+    `<p class="meta" style="margin-top:14px">This is the exact chunk the retriever returned, with the ` +
+    `quoted sentence highlighted in place. The citation's character offsets point at this highlight.</p>`;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerVeil').classList.add('open');
+}
+function closeSource() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerVeil').classList.remove('open');
+}
+document.getElementById('drawerClose').addEventListener('click', closeSource);
+document.getElementById('drawerVeil').addEventListener('click', closeSource);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSource(); });
+
+async function ask(question) {
+  out.innerHTML = '';
+  btn.disabled = true;
+  const useRerank = document.getElementById('rerankToggle').checked;
+  try {
+    const r = await fetch('/query', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question, rerank: useRerank})
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const answered = d.status === 'answered';
+    lastSpans = d.answer_spans;
+    let html = `<div style="margin-top:18px"><span class="badge ${answered ? 'ok' : 'refused'}">${
+      answered ? '✓ Answered with citations' : 'Insufficient evidence — refusing to guess'}</span>`;
+    if (!answered) {
+      html += `<p class="meta">No sentence in the corpus scored high enough to quote. That is the design: a citation system that guesses is worse than one that refuses.</p>`;
+    }
+    d.answer_spans.forEach((span, i) => {
+      const c = span.citation;
+      html += `<div class="span"><p class="quote">&ldquo;${esc(span.text)}&rdquo;</p>` +
+        `<p class="cite">Source: <code>${esc(c.doc_id)}</code> · page ${c.page} · ` +
+        `chars ${c.char_start}–${c.char_end} · score ${c.score.toFixed(3)}</p>` +
+        `<button type="button" class="source-btn" data-source="${i}">View source in context →</button></div>`;
+    });
+    html += `<p class="meta">Latency: ${d.latency_ms} ms · ranking: ${d.reranked ? 'cross-encoder rerank over fused top-20' : 'RRF fusion only'}</p></div>`;
+    out.innerHTML = html;
+  } catch (e) {
+    out.innerHTML = `<p class="error">Something went wrong: ${esc(e.message)}</p>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('ask').addEventListener('submit', e => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (q) ask(q);
+});
+out.addEventListener('click', e => {
+  const sourceBtn = e.target.closest('[data-source]');
+  if (sourceBtn) openSource(Number(sourceBtn.dataset.source));
+});
+document.querySelectorAll('.chip[data-q]').forEach(chip =>
+  chip.addEventListener('click', () => { input.value = chip.dataset.q; ask(chip.dataset.q); }));
+
+// Voice input: record with MediaRecorder, transcribe server-side with
+// faster-whisper (local model — audio never leaves this machine), fill the
+// question box, and auto-ask. Click Speak to start, click again to stop.
+const micBtn = document.getElementById('mic');
+let mediaRecorder = null, audioChunks = [], recording = false;
+
+micBtn.addEventListener('click', async () => {
+  if (recording) { mediaRecorder.stop(); return; }
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    micBtn.textContent = '🎙 Not supported';
+    setTimeout(() => { micBtn.textContent = '🎙 Speak'; }, 2000);
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4']
+      .find(t => MediaRecorder.isTypeSupported(t)) || '';
+    mediaRecorder = new MediaRecorder(stream, mimeType ? {mimeType} : undefined);
+    audioChunks = [];
+    mediaRecorder.addEventListener('dataavailable', e => { if (e.data.size) audioChunks.push(e.data); });
+    mediaRecorder.addEventListener('stop', async () => {
+      stream.getTracks().forEach(t => t.stop());
+      recording = false;
+      micBtn.textContent = '✍️ Transcribing…';
+      micBtn.disabled = true;
+      const blob = new Blob(audioChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+      const ext = blob.type.includes('mp4') ? 'm4a' : 'webm';
+      const fd = new FormData();
+      fd.append('file', blob, 'recording.' + ext);
+      try {
+        const r = await fetch('/stt', {method: 'POST', body: fd});
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+        input.value = d.text;
+        const q = d.text.trim();
+        if (q) ask(q);
+      } catch (err) {
+        input.value = '';
+        input.placeholder = 'Voice: ' + err.message + ' (first use downloads the speech model, ~150 MB)';
+        setTimeout(() => { input.placeholder = 'Ask a question about the papers…'; }, 6000);
+      } finally {
+        micBtn.textContent = '🎙 Speak';
+        micBtn.disabled = false;
+      }
+    });
+    mediaRecorder.start();
+    recording = true;
+    micBtn.textContent = '🔴 Stop & ask';
+  } catch (e) {
+    micBtn.textContent = '🎙 Mic blocked';
+    setTimeout(() => { micBtn.textContent = '🎙 Speak'; }, 2500);
+  }
+});
+
+showHealth();
+</script>
+</body>
+</html>

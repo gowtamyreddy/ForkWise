@@ -1,149 +1,225 @@
-"""Forkwise live demo (Hugging Face Space, free tier).
+"""Forkwise x EvidenceRAG — the LIVE demo.
 
-A guided tour of the three things Forkwise does that incumbent tools
-do not: fork-and-diff replay, cost per successful task, and tracing a
-plain-Python agent with one decorator. Everything runs locally in this
-Space over a small built-in knowledge base; the priced examples come
-from the bundled sample-trace import, labeled as an import.
+A real question-answering system (EvidenceRAG: hybrid retrieval ->
+cross-encoder rerank -> extractive answer with citations, over 120+
+real ML papers) with Forkwise tracing every step as it happens. There
+is no seed data in this demo: the first question a visitor asks is
+run #1, and the FinOps counters fill up with live traffic. Any run can
+be forked at the rerank step with a different top_k to see exactly
+what changes.
 
-The full dashboard (uvicorn forkwise.server:app) ships in the GitHub
-repo for local use; this panel is the visitor-friendly front door.
+Boot: if the paper index is missing, fetch the corpus and build it
+(blocking, before the UI opens — the same recipe as the EvidenceRAG
+Space). Free-tier storage is ephemeral, so the trace log resets when
+the Space sleeps; that is stated in the UI rather than hidden.
 """
-
+import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "demo"))
 
-try:
-    import spaces
+import gradio as gr  # noqa: E402
+import spaces  # noqa: E402
 
-    gpu = spaces.GPU(duration=60)
-except Exception:  # local runs without the spaces package
-    def gpu(fn):
-        return fn
+from forkwise import Tracer  # noqa: E402
+from forkwise.replay import replay_run  # noqa: E402
+from forkwise.stats import finops  # noqa: E402
 
-import agent as demo_agent
-from forkwise.importer import import_jsonl
-from forkwise.replay import replay_run
-from forkwise.stats import finops
+DB_PATH = str(ROOT / "forkwise_live.db")
+tracer = Tracer(DB_PATH)
 
-tracer = demo_agent.tracer
-store = tracer.store
+_evr = None
+_rerank_module = None
+_answer_module = None
 
 
-def _seed():
-    if store.list_runs(limit=1):
-        return
-    demo_agent.knowledge_qa("How many moons does Jupiter have?")
-    demo_agent.knowledge_qa("Who was the first computer programmer?")
-    demo_agent.knowledge_qa("What is the population of Mars?")
-    import_jsonl(store, (ROOT / "demo" / "sample_traces.jsonl").read_text(),
-                 source_name="support-agent-import")
+def _boot():
+    global _evr, _rerank_module, _answer_module
+    artifacts = ROOT / "data" / "artifacts" / "index.faiss"
+    if not artifacts.exists():
+        for script in ("fetch_corpus.py", "fetch_bulk_corpus.py",
+                       "build_index.py"):
+            print("boot: running scripts/%s ..." % script, flush=True)
+            subprocess.run([sys.executable, str(ROOT / "scripts" / script)],
+                           cwd=str(ROOT), check=True)
+    from app import main as evr_app
+    from src import answer as answer_module
+    from src import rerank as rerank_module
+    if evr_app._retriever is None:
+        evr_app.startup()
+    _evr, _rerank_module, _answer_module = (
+        evr_app, rerank_module, answer_module)
+    print("boot: EvidenceRAG ready; Forkwise tracing is live.", flush=True)
 
 
-def _span_rows(run_id):
+_boot()
+
+
+@tracer.step(kind="retriever")
+def retrieve(question):
+    return _evr._retriever.hybrid_search(question, top_k=20)
+
+
+@tracer.step(kind="ml")
+def rerank(question, candidates, top_k=5):
+    return _rerank_module.rerank(
+        question, candidates, _evr._get_reranker(), top_k)
+
+
+@tracer.step(kind="rule")
+def answer(question, ranked):
+    return _answer_module.extractive_answer(
+        question, ranked, _evr._retriever.embedder)
+
+
+@tracer.pipeline("evidencerag-live")
+def evidencerag_live(question):
+    fused = retrieve(question)
+    ranked = rerank(question, fused)
+    result = answer(question, ranked)
+    tracer.mark_success(result.get("status") == "answered")
+    return result
+
+
+def _fmt_answer(result):
+    if result.get("status") != "answered":
+        return ("**Insufficient evidence.** The best-matching passage "
+                "scored below the answer threshold, so EvidenceRAG "
+                "refused rather than guess — and Forkwise recorded the "
+                "run as a failure, which is what a real trace log should "
+                "do with a refusal.")
+    parts = []
+    for span in result["spans"]:
+        cite = span["citation"]
+        parts.append("> %s" % span["text"])
+        parts.append("*— %s, page %s, chars %s–%s, score %s*" % (
+            cite["doc_id"], cite["page"], cite["char_start"],
+            cite["char_end"], round(cite["score"], 3)))
+    return "\n\n".join(parts)
+
+
+def _steps_rows(run_id):
     rows = []
-    for s in store.get_spans(run_id):
-        tok = ""
-        if s["tokens_in"] is not None:
-            tok = f"{s['tokens_in']} in / {s['tokens_out']} out"
+    for s in tracer.store.get_spans(run_id):
         rows.append([s["seq"], s["name"], s["kind"],
-                     round(s["latency_ms"] or 0, 1),
-                     f"${s['cost_usd']:.6f}", tok])
+                     s["model"] or "local",
+                     round(s["latency_ms"] or 0),
+                     "$%.6f" % (s["cost_usd"] or 0)])
     return rows
 
 
-def _finops_md():
-    stats = finops(store)
+def _counters():
+    stats = finops(tracer.store)
     t = stats["totals"]
-    lines = [
-        f"**{t['runs']} runs** - {t['succeeded']} succeeded, {t['failed']} failed - "
-        f"total cost **${t['total_cost_usd']:.6f}** - "
-        f"cost per successful task **{('$%.6f' % t['cost_per_successful_task']) if t['cost_per_successful_task'] is not None else 'n/a'}** - "
-        f"failed-run waste **${t['failed_run_waste_usd']:.6f}** - "
-        f"retry waste **${t['retry_waste_usd']:.6f}** ({len(stats['retry_events'])} retry events)",
-        "",
-    ]
-    for name, p in stats["pipelines"].items():
-        cps = ("$%.6f" % p["cost_per_successful_task"]) if p["cost_per_successful_task"] is not None else "n/a"
-        lines.append(f"- **{name}**: {p['runs']} runs, {p['succeeded']} ok, "
-                     f"cost/successful task {cps}, p95 latency {p['latency_p95_ms']:.0f} ms")
-    return "\n".join(lines)
+    cps = t["cost_per_successful_task"]
+    cps_text = "$%.6f" % cps if cps is not None else "n/a yet"
+    md = ("**Live trace log (since this demo woke up):** %d runs · "
+          "%d answered · %d refused/failed · cost per successful task "
+          "%s (every model here is open weights on local compute, "
+          "so the honest total is $0 in API spend)"
+          % (t["runs"], t["succeeded"], t["failed"], cps_text))
+    return md
 
 
-@gpu
-def run_agent(question, style):
-    answer = demo_agent.knowledge_qa(question, style=style)
-    run = next(r for r in store.list_runs(limit=50)
-               if r["name"] == "knowledge-qa")
-    return answer, _span_rows(run["id"]), run["id"], _finops_md()
+@spaces.GPU(duration=120)
+def ask(question):
+    question = (question or "").strip()
+    if not question:
+        return ("Type a question about retrieval-augmented generation "
+                "first.", [], "", "", _counters())
+    result = evidencerag_live(question)
+    run = tracer.store.list_runs(limit=1)[0]
+    return (_fmt_answer(result), _steps_rows(run["id"]), run["id"],
+            run["id"][:8], _counters())
 
 
-@gpu
-def fork_run(run_id, from_seq, style):
+@spaces.GPU(duration=120)
+def fork(run_id, top_k):
     if not run_id:
-        return "Run the agent first, then fork its run.", _finops_md()
-    try:
-        new_run, diff = replay_run(tracer, run_id, int(from_seq),
-                                   overrides={"style": style})
-    except ValueError as exc:
-        return str(exc), _finops_md()
-    lines = [f"**Final output {'CHANGED' if diff['output_changed'] else 'unchanged'}** - "
-             f"cost delta ${diff['total_cost_delta']:+.6f} - "
-             f"latency delta {diff['total_latency_delta_ms']:+.1f} ms", ""]
-    for step in diff["steps"]:
-        source = "from recording" if step["from_recording"] else "ran live"
-        lines.append(f"- step {step['seq']} **{step['name']}** ({source}): "
-                     f"output {'changed' if step['output_changed'] else 'same'}, "
-                     f"cost {step['cost_delta']:+.6f}, latency {step['latency_delta_ms']:+.1f} ms")
-    lines += ["", f"New run id: `{new_run['id']}` (a replay of `{run_id}`)"]
-    return "\n".join(lines), _finops_md()
+        return ("Ask a question first — then you can fork its run.",
+                [], _counters())
+    new_run, diff = replay_run(tracer, run_id, 2, {"top_k": int(top_k)})
+    lines = ["**Forked run %s from step 2 (rerank) with top_k=%d.**"
+             % (new_run["id"][:8], int(top_k)), ""]
+    for s in diff["steps"]:
+        if s["from_recording"]:
+            lines.append("- Step %d %s — served from the recording "
+                         "(not re-run)" % (s["seq"], s["name"]))
+        else:
+            lines.append("- Step %d %s — re-run live, output %s"
+                         % (s["seq"], s["name"],
+                            "CHANGED" if s["output_changed"] else "same"))
+    lines.append("")
+    lines.append("**Final answer: %s.** Total latency delta %+.0f ms."
+                 % ("CHANGED" if diff["output_changed"] else "unchanged",
+                    diff["total_latency_delta_ms"]))
+    spans = tracer.store.get_spans(new_run["id"])
+    import json
+    new_answer = json.loads(spans[-1]["output_json"])
+    lines.append("")
+    lines.append(_fmt_answer(new_answer))
+    return ("\n".join(lines), _steps_rows(new_run["id"]), _counters())
 
 
-def build_app():
-    import gradio as gr
+HEADER = """# Forkwise × EvidenceRAG — live
 
-    with gr.Blocks(title="Forkwise") as blocks:
-        gr.Markdown(
-            "# Forkwise - agent observability with a do-over button\n"
-            "Every tool in this market lets you *watch* a failed agent run. "
-            "Forkwise lets you **re-run it from the step that broke**, with a "
-            "fix applied, and diff the result. Local-first: one decorator, one "
-            "SQLite file, no account, no framework. Below is the real thing, "
-            "running a plain-Python agent live.")
-        with gr.Row():
-            question = gr.Textbox(
-                label="Ask the demo agent",
-                value="How many moons does Jupiter have?")
-            style = gr.Dropdown(["brief", "detailed"], value="brief",
-                                label="Answer style")
-        run_btn = gr.Button("Run agent", variant="primary")
-        answer = gr.Markdown()
-        spans = gr.Dataframe(
-            headers=["#", "step", "kind", "latency ms", "cost", "tokens"],
-            label="Traced steps of that run")
-        run_id = gr.Textbox(label="Run id (fork this run below)")
-        with gr.Row():
-            from_seq = gr.Number(value=3, precision=0,
-                                 label="Fork from step")
-            fork_style = gr.Dropdown(["brief", "detailed"], value="detailed",
-                                     label="Override: answer style")
+Ask a real question over 120+ real ML papers. There is no chatbot and
+no canned demo data: **EvidenceRAG** (hybrid retrieval → cross-encoder
+reranking → extractive answers with document/page/character citations)
+answers you, and **Forkwise** traces every step as it happens — then
+lets you rewind the run and re-run the reranking step with a
+different `top_k` to see exactly what changes.
+
+*Honest fine print: free hosting sleeps when idle, which resets the
+trace log and rebuilds the paper index on wake (~8 min). Costs read
+$0 because every model is open weights running locally — no paid
+APIs, which is itself one of the things the trace makes visible.*
+
+Code: [ForkWise](https://github.com/gowtamyreddy/ForkWise) ·
+[EvidenceRAG](https://github.com/gowtamyreddy/evidencerag)
+"""
+
+with gr.Blocks(title="Forkwise x EvidenceRAG — Live") as demo:
+    gr.Markdown(HEADER)
+    counters = gr.Markdown(_counters())
+    question = gr.Textbox(
+        label="Ask the papers",
+        placeholder="e.g. How many passages does the DPR knowledge "
+                    "source contain?",
+        lines=2)
+    ask_btn = gr.Button("Ask — and trace it", variant="primary")
+    answer_md = gr.Markdown(label="Answer")
+    steps = gr.Dataframe(
+        headers=["Step", "Name", "Kind", "Model", "Latency (ms)", "Cost"],
+        datatype=["number", "str", "str", "str", "number", "str"],
+        label="Traced steps of this run", interactive=False)
+    with gr.Row():
+        run_id_state = gr.State("")
+        run_id_show = gr.Textbox(label="Run id (fork this run)",
+                                 interactive=False)
+        top_k = gr.Slider(1, 10, value=3, step=1,
+                          label="Fork from rerank with top_k")
         fork_btn = gr.Button("Fork and replay")
-        diff = gr.Markdown()
-        gr.Markdown("## FinOps across every run in this demo")
-        fin = gr.Markdown()
-        refresh = gr.Button("Refresh FinOps")
-        run_btn.click(run_agent, [question, style],
-                      [answer, spans, run_id, fin])
-        fork_btn.click(fork_run, [run_id, from_seq, fork_style], [diff, fin])
-        refresh.click(lambda: _finops_md(), None, fin)
-        blocks.load(lambda: _finops_md(), None, fin)
-    return blocks
-
+    fork_md = gr.Markdown(label="Fork result")
+    gr.Examples(
+        examples=[
+            ["How many passages does the DPR knowledge source contain?"],
+            ["What are Self-RAG's reflection tokens?"],
+            ["How does RAPTOR organize retrieved text?"],
+            ["What is the airspeed velocity of an unladen swallow?"],
+        ],
+        inputs=question)
+    ask_btn.click(ask, inputs=question,
+                  outputs=[answer_md, steps, run_id_state, run_id_show,
+                           counters])
+    question.submit(ask, inputs=question,
+                    outputs=[answer_md, steps, run_id_state, run_id_show,
+                             counters])
+    fork_btn.click(fork, inputs=[run_id_state, top_k],
+                   outputs=[fork_md, steps, counters])
 
 if __name__ == "__main__":
-    _seed()
-    build_app().queue().launch(server_name="0.0.0.0", server_port=7860)
+    demo.queue()
+    demo.launch()

@@ -1,0 +1,200 @@
+2601.01918	Pervasive Vulnerability Analysis and Defense for QKD-based Quantum Private Query
+2607.14076	From Pixels to States: Rethinking Interactive World Models as Game Engines
+2510.00599	Designing Ambiguity Sets for Distributionally Robust Optimization Using Structural Causal Optimal Transport
+2601.08265	AIMC-Spec: A Benchmark Dataset for Automatic Intrapulse Modulation Classification Under Variable Noise Conditions
+2609.30483	AcoustiClaim: A Numeric Claim Benchmark with Instrument Ground Truth
+2510.03784	Performance-Efficiency Tradeoffs in Transformers: An Approximation Theory Perspective
+2409.03879	Multi-Camera Industrial Open-Set Person Re-Identification and Tracking
+2510.14866	Benchmarking Multimodal Large Language Models for Face Recognition
+2609.00356	A Stable Aggregation Method for Quantum Federated Learning
+2501.03113	Balancing Efficiency and Expressiveness: Subgraph GNNs with Walk-Based Centrality
+2512.03745	Dual-level Modality Debiasing Learning for Unsupervised Visible-Infrared Person Re-Identification
+2508.10490	On the Complexity-Faithfulness Trade-Off of Gradient-Based Explanations
+2605.12049	Scaling Laws and Tradeoffs in Recurrent Networks of Expressive Neurons
+2603.07351	A Distributed Gaussian Process Model for Multi-Robot Mapping
+2605.31271	DriveMA: Driving Vision-Language-Action Models with verifiable Meta-Actions
+2507.04600	DisMS-TS: Eliminating Redundant Multi-scale Features for Time Series Classification
+2605.16457	Identifiable Token Correspondence for World Models
+2408.02361	Dialogue Ontology Relation Extraction via Constrained Chain-of-Thought Decoding
+2602.18005	Multi-Modal Sensing Residual-Corrected GNN for mmWave Path Loss Prediction via Synesthesia of Machines
+2508.21427	Computing Radially-Symmetric Solutions of the Ultra-Relativistic Euler Equations with Entropy-Stable Discontinuous Galerkin Methods
+2502.06327	Prompt-Driven Continual Graph Learning
+2607.27563	Strategies for Milestone-driven Start-ups in Multi-activity Settings
+2501.13414	Physics-Aware Sparse Signal Recovery Through PDE-Governed Measurement Systems
+2401.06634	CCFC: Bridging Federated Clustering and Contrastive Learning
+2602.17938	dfcosmic: A Python package for cosmic ray removal
+2607.29200	UltraSAM3: A Concept-Driven Foundation Model for Universal Ultrasound Image Segmentation
+2610.19544	Shot- and Noise-Aware Pauli Correlation Encoding for Max-Cut Experiments on IBM Heron Quantum Processor
+2403.10187	Grasp Anything: Combining Teacher-Augmented Policy Gradient Learning with Instance Segmentation to Grasp Arbitrary Objects
+2406.08640	Adaptively Implicit Advection for Atmospheric Flows
+2605.03945	Integrating Feature Correlation in Differential Privacy with Applications in DP-ERM
+2407.10149	Edge Sampling of Graphs: Graph Signal Processing Approach With Edge Smoothness
+2610.07967	DecepEval: A Benchmark for Evaluating Deception in LLM Agents
+2609.40332	Tight Universal Bounds on Quantum Data Hiding with Multipartite Werner States
+2505.19437	RA-CLAP: Relation-Augmented Emotional Speaking Style Contrastive Language-Audio Pretraining For Speech Retrieval
+2407.00334	Examining and Comparing the Effectiveness of Virtual Reality Serious Games and LEGO Serious Play for Learning Scrum
+2501.08241	A Feature-Level Ensemble Model for COVID-19 Identification in CXR Images using Choquet Integral and Differential Evolution Optimization
+2509.08191	Rollout-LaSDI: Enhancing the long-term accuracy of Latent Space Dynamics
+2602.02695	Integration of Variational Quantum Algorithms into Atomistic Simulation Workflows
+2406.01597	End-to-End Rate-Distortion Optimized 3D Gaussian Representation
+2512.03629	Spectral Properties of the Deformed Laplacian Matrix of Trees and H- join Graphs
+2607.13668	Machine Learning-based detection of long COVID using Heart Rate Variability Analysis
+2604.11653	GazeVaLM: A Multi-Observer Eye-Tracking Benchmark for Evaluating Clinical Realism in AI-Generated X-Rays
+2508.12060	Applied Causality to Infer Protein Dynamics and Kinetics
+2607.07262	GalPort: Investigation of the bar in action-angle space
+2503.20290	QualiSpeech: A Speech Quality Assessment Dataset with Natural Language Reasoning and Descriptions
+2605.12608	A Data Efficiency Study of Synthetic Fog for Object Detection Using the Clear2Fog Pipeline
+2505.13197	Inferring stochastic dynamics with growth from cross-sectional data
+2508.04698	FaST: Feature-aware Sampling and Tuning for Personalized Preference Alignment with Limited Data
+2406.17613	Counting of surfaces and computational complexity in column sums of symmetric group character tables
+2502.09075	PTZ-Calib: Robust Pan-Tilt-Zoom Camera Calibration
+2603.05685	From Line Knowledge Digraphs to Sheaf Semantics: A Categorical Framework for Knowledge Graphs
+2411.17383	AnchorCrafter: Animate CyberAnchors Saling Your Products via Human-Object Interacting Video Generation
+2605.16117	SGR: A Stepwise Reasoning Framework for LLMs with External Subgraph Generation
+2408.11527	The Vizier Gaussian Process Bandit Algorithm
+2410.14891	LUCI in the Surface Code with Dropouts
+2509.25512	An Implementation of Multi-User MIMO Downlink for O-RAN 5G New Radio using OpenAirInterface
+2405.15709	Information-theoretic Generalization Analysis for Expected Calibration Error
+2503.01256	Prior-Fitted Networks Scale to Larger Datasets When Treated as Weak Learners
+2405.02001	On Finding Optimal Collective Variables for Complex Systems by Minimizing the Deviation between Effective and Full Dynamics
+2606.22352	On the Sparsity-Storage-Accuracy Tradeoff in Parsimoniously Activated Dictionary Learning
+2507.10392	Zorse: Optimizing LLM Training Efficiency on Heterogeneous GPU Clusters
+2411.14554	Swift: A Multi-FPGA Framework for Scaling Up Accelerated Graph Analytics
+2509.11543	UI-S1: Advancing GUI Automation via Semi-online Reinforcement Learning
+2402.12043	A Lightweight Parallel Framework for Blind Image Quality Assessment
+2509.18990	Learning From Simulators: A Theory of Simulation-Grounded Learning
+2403.18908	Enhancing multiple object tracking accuracy via quantum annealing
+2510.06635	StruSR: Structure-Aware Symbolic Regression with Physics-Informed Taylor Guidance
+2606.03825	Dynamic Short Convolutions Improve Transformers
+2501.10808	Optimizing MACD Trading Strategies A Dance of Finance, Wavelets, and Genetics
+2510.22993	Can Language Models Compose Skills In-Context?
+2607.29175	Execution-First Synthetic Tool-Use Trace Generation for LLM Agents
+2505.02877	A Wireless Collaborated Inference Acceleration Framework for Plant Disease Recognition
+2410.14245	PReP: Efficient Context-Based Shape Retrieval for Missing Parts
+2505.14303	Optimizing Binary and Ternary Neural Network Inference on RRAM Crossbars using CIM-Explorer
+2409.05590	Transferability of datasets between Machine-Learning Interaction Potentials
+2409.15974	Disentangling Age and Identity with a Mutual Information Minimization Approach for Cross-Age Speaker Verification
+2505.11055	Internal Effectful Forcing in System T
+2506.00869	What's Missing in Vision-Language Models? Probing Their Struggles with Causal Order Reasoning
+2508.07214	Unsupervised Real-World Super-Resolution via Rectified Flow Degradation Modelling
+2511.07457	GRIP: In-Parameter Graph Reasoning through Fine-Tuning Large Language Models
+2406.06300	Human Gaze and Head Rotation during Navigation, Exploration and Object Manipulation in Shared Environments with Robots
+2411.11809	The Lambda Calculus is Quantifiable
+2403.17914	Hierarchical Multi-label Classification for Fine-level Event Extraction from Aviation Accident Reports
+2607.29040	Rethinking Detection Calibration: A Coordinate and Direction Perspective
+2512.07818	Provable Long-Range Benefits of Next-Token Prediction
+2608.10218	Mind Viruses: Self-Propagating Ideas in Multi-Agent LLM Systems
+2601.17533	Reconstructing Training Data from Adapter-based Federated Large Language Models
+2412.19153	Sketch-MoMa: Teleoperation for Mobile Manipulator via Interpretation of Hand-Drawn Sketches
+2605.16544	TARIPlay: A Test Framework for AR Applications based on Interactive Area Detection in Playback Videos
+2609.33761	StatD2GAN: When Calibration Masks Generator Quality in Held-Out Evaluation of Synthetic Weather Sequences
+2508.10537	Computing the Fréchet Distance When Just One Curve is c-Packed: A Simple Almost-Tight Algorithm
+2406.09295	AlignMMBench: Evaluating Chinese Multimodal Alignment in Large Vision-Language Models
+2403.04602	Minimum-Time Planar Paths with Up to Two Constant Acceleration Inputs and L2 Velocity and Acceleration Constraints
+2504.14875	ReSpec: Relevance and Specificity Grounded Online Filtering for Learning on Video-Text Data Streams
+2510.27062	Consistency Training Helps Stop Sycophancy and Jailbreaks
+2609.12621	Universally truthful mechanisms for scheduling
+2407.05868	KG-FPQ: Evaluating Factuality Hallucination in LLMs with Knowledge Graph-based False Premise Questions
+2606.03780	Expert-Aware Causal Tracing of Factual Recall in Sparse MoE Language Models
+2605.22373	Boundary-targeted Membership Inference Attacks on Safety Classifiers
+2509.06964	Prototype: A Keyword Spotting-Based Intelligent Audio SoC for IoT
+2505.20563	Bi-Level Unsupervised Feature Selection
+2504.05729	Robust and Efficient Average Consensus with Non-Coherent Over-the-Air Aggregation
+2505.16952	FrontierCO: Real-World and Large-Scale Evaluation of Machine Learning Solvers for Combinatorial Optimization
+2501.07529	Determining subtree movement distance and consensus between cell trees
+2403.11915	A general quadratic enrichment of the Crouzeix-Raviart finite element
+2412.00113	Boundary-Decoder network for inverse prediction of capacitor electrostatic analysis
+2508.05580	Follow-Your-Instruction: A Comprehensive MLLM Agent for World Data Synthesis
+2507.22810	VRISE: A Virtual Reality Platfrom for Immersive and Interactive Surveying Education
+2608.17447	NGS-Marker: Robust Native Watermarking for 3D Gaussian Splatting
+2403.16569	Revealing Vulnerabilities of Neural Networks in Parameter Learning and Defense Against Explanation-Aware Backdoors
+2405.05639	Supercomputers as a Continous Medium
+2407.08566	XYZ Ruby Code: Making a Case for a Three-Colored Graphical Calculus for Quantum Error Correction in Spacetime
+2411.08013	Investigating the Effectiveness of Explainability Methods in Parkinson’s Detection from Speech
+2505.18452	MedScore: Generalizable Factuality Evaluation of Open-ended Long-form Medical Answers by Domain-adapted Claim Decomposition and Verification
+2504.08584	Boosting multi-demographic federated learning for chest radiograph analysis using general-purpose self-supervised representations
+2504.03313	Steerable Anatomical Shape Synthesis with Implicit Neural Representations
+2401.12768	What Can Self-Admitted Technical Debt Tell Us About Security? A Mixed-Methods Study
+2608.11749	MOON: Multi-Objective OrthoNormalized Updates for Multitask Learning
+2407.08485	Logistic lasso regression with nearest neighbors for gradient-based dimension reduction
+2509.18839	Benchmarking Vision-Language and Multimodal Large Language Models in Zero-shot and Few-shot Scenarios: A study on Christian Iconography
+2512.14734	Inference Time Feature Injection: A Lightweight Approach for Real-Time Recommendation Freshness
+2406.00753	Singular Perturbation: When the Perturbation Parameter Becomes a State-Dependent Function
+2406.11657	Can LLM be a Personalized Judge?
+2609.07307	SPARROW: Scalable Taxonomy Induction via Structure-Preserving Partitioning and Constraint-Guided Merging
+2410.13677	Beamforming Optimization for Continuous Aperture Array (CAPA)-Based Communications
+2511.07168	LEAD: LLM-enhanced Engine for Author Disambiguation
+2606.15650	AnonShield: Scalable On-Premise Pseudonymization for CSIRT Vulnerability Data
+2602.07548	Capturing the Topological Phase Transition and Thermodynamics of the 2D XY Model via Manifold-Aware Score-Based Generative Modeling
+2504.03897	MaxTDA: Robust Statistical Inference for Maximal Persistence in Topological Data Analysis
+2609.36761	The Reach of Abelian Covers in Hypergraphs
+2412.20068	The Emotional Spectrum of LLMs: Leveraging Empathy and Emotion-Based Markers for Mental Health Support
+2502.12330	X-IL: Exploring the Design Space of Imitation Learning Policies
+2507.03410	Graph Repairs with Large Language Models: An Empirical Study
+2506.18779	DiffDef: A Diffusion Model for Generating Multimodal Goal Shapes From Demonstrations for Deformable Object Manipulation
+2511.00090	LeMiCa: Lexicographic Minimax Path Caching for Efficient Diffusion-Based Video Generation
+2408.05284	Can a Bayesian Oracle Prevent Harm from an Agent?
+2608.11019	DEFT: Data-Efficient Frequency-domain Top-k Sampling via Inverse Discrete Fourier Transform for Spatiotemporal Dynamical Systems Modeling
+2505.14604	Let LRMs Break Free from Overthinking via Self-Braking Tuning
+2608.02919	FLARE: Few-shot Learning-based Adaptive Reflective Engine
+2404.03924	Learning Correlation Structures for Vision Transformers
+2409.00510	Streamlining Forest Wildfire Surveillance: AI-Enhanced UAVs Utilizing the FLAME Aerial Video Dataset for Lightweight and Efficient Monitoring
+2409.16391	Patch-Based Contrastive Learning and Memory Consolidation for Online Unsupervised Continual Learning
+2508.21295	A Flexible Design for Beam Squint Effect Suppression in IRS-Aided THz Communications
+2609.16659	Approximate synthesis of general single-qubit unitaries over the Clifford+$\sqrt{T}$ gate set
+2509.04379	SSGaussian: Semantic-Aware and Structure-Preserving 3D Style Transfer
+2605.07227	Physics-Aware Representation Learning on Electronic Charge Density for Materials Property Prediction
+2607.00003	From "Strings" to "Things" for Personal Knowledge Graphs: Evaluating LLM Triple Extraction for Recommendation Systems
+2607.05728	Sudoku Grids That Require Many Clues
+2601.15055	SpooFL: Spoofing Federated Learning
+2507.08607	BayesTTA: Continual-Temporal Test-Time Adaptation for Vision-Language Models via Gaussian Discriminant Analysis
+2502.08754	HistoSmith: Single-Stage Histology Image-Label Generation via Conditional Latent Diffusion for Enhanced Cell Segmentation and Classification
+2501.02690	GS-DiT: Advancing Video Generation with Pseudo 4D Gaussian Fields through Efficient Dense 3D Point Tracking
+2606.23612	A quantum algorithm for one-shot signatures
+2402.11866	Two Online Map Matching Algorithms Based on Analytic Hierarchy Process and Fuzzy Logic
+2601.09588	Energy-Entropy Regularization: The True Power of Minimal Looped Transformers
+2512.17975	CoBiTS: Single-detector discrimination of binary black hole signals from glitches using deep learning
+2407.21578	Algorithmic methods of finite discrete structures. Topological graph drawing (part II)
+2605.00313	Beyond structure: revolutionising materials discovery via AI-driven synthesis protocol-property relationships
+2503.22240	Bimanual Regrasp Planning and Control for Active Reduction of Object Pose Uncertainty
+2610.04335	Synthetic-to-Real ViT-Based Pose Estimation of a Noncooperative UAV
+2508.01236	Mitigating Information Loss under High Pruning Rates for Efficient Large Vision Language Models
+2403.01233	Results and Lessons Learned from Autonomous Driving Transportation Services in Airfield, Crowded Indoor, and Urban Environments
+2506.13730	BanditWare: A Contextual Bandit-based Framework for Hardware Prediction
+2607.07267	Billions of Sketches Reveal Hidden Cultural Variation in Human Concepts
+2606.29845	Bricker to BRACE: A Bracket Exposure RAW Dataset and Restoration Model for Flicker-Banding
+2412.07225	EchoIR: Advancing Image Restoration with Echo Upsampling and Bi-Level Optimization
+2411.00316	Quantum Entanglement Path Selection and Qubit Allocation via Adversarial Group Neural Bandits
+2504.09849	CKMImageNet: A Dataset for AI-Based Channel Knowledge Map Toward Environment-Aware Communication and Sensing
+2505.18546	ReflectGAN: Modeling Vegetation Effects for Soil Carbon Estimation From Satellite Imagery
+2405.12070	AutoSoccerPose: Automated 3D posture Analysis of Soccer Shot Movements
+2502.06342	The exponential distribution of the orders of demonstrative, numeral, adjective and noun
+2505.16951	From Reality to Virtual Worlds: The Role of Photogrammetry in Game Development
+2409.00638	IGEV++: Iterative Multi-Range Geometry Encoding Volumes for Stereo Matching
+2603.22800	CATNAV: Cached Vision-Language Traversability for Efficient Zero-Shot Robot Navigation
+2505.23030	Can Modern NLP Systems Reliably Annotate Chest Radiography Exams? A Pre-Purchase Evaluation and Comparative Study of Solutions from AWS, Google, Azure, John Snow Labs, and Open-Source Models on an Independent Pediatric Dataset
+2607.09139	Control Laguerre Tessellation: Semi-discrete Optimal Transport Over Control Systems
+2505.15256	Zero-Shot Gaze-based Volumetric Medical Image Segmentation
+2609.31871	IndustryLLM: Failure-Driven LLM Training for Industrial Procurement
+2605.18604	Efficient Gradient Methods for Distributed Saddle Problems
+2403.19508	Fairness-Aware Data Augmentation for Cardiac MRI Using Text-Conditioned Diffusion Models
+2410.08403	MENAGE: Mixed-Signal Event-Driven Neuromorphic Accelerator for Edge Applications
+2501.00260	Detection and Prevention of Smishing Attacks
+2402.19012	Algorithmically Expressive, Always-Terminating Model for Reversible Computation
+2403.11941	Perfect Zero-Knowledge PCPs for #P
+2606.17930	How Inference Compute Shapes Frontier LLM Evaluation
+2510.03236	Improving S&P 500 Volatility Forecasting through Regime-Switching Methods
+2601.16424	RENEW: Risk- and Energy-Aware Navigation in Dynamic Waterways
+2512.23927	Soft Fitted Q-Iteration without Bellman Completeness: Occupancy Reweighting and Temperature Annealing
+2401.00625	Beyond Efficiency: A Systematic Survey of Resource-Efficient Large Language Models
+2403.09182	Anatomically aware simulation of patient-specific glioblastoma xenografts
+2504.15073	Hermitian Quaternion Toeplitz Matrices by Quaternion-valued Generating Functions
+2510.10209	LOOPerSet: A Large-Scale Dataset for Data-Driven Polyhedral Compiler Optimization
+2605.07135	Demystifying and Detecting Agentic Workflow Injection Vulnerabilities in GitHub Actions
+2405.10028	Accelerator beam phase space tomography using machine learning to account for variations in beamline components
+2602.02725	Automated Dysphagia Screening Using Noninvasive Neck Acoustic Sensing
+2601.07338	Beyond Literal Mapping: Benchmarking and Improving Non-Literal Translation Evaluation
+2409.04016	Investigating Neural Audio Codecs For Speech Language Model-Based Speech Generation
+2602.05777	Efficient implementation of arbitrary Hermitian-preserving and trace-preserving maps
+2506.19825	Evaluating Compliance with Visualization Guidelines in Diagrams for Scientific Publications Using Large Vision Language Models
+2503.08317	Uni-Gaussians: Unifying Camera and Lidar Simulation with Gaussians for Dynamic Driving Scenarios

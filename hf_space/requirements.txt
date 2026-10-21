@@ -1,0 +1,24 @@
+# EvidenceRAG requirements
+# Install order note: install CPU-only torch FIRST with
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# then install this file, so sentence-transformers reuses the CPU torch build.
+
+fastapi==0.115.6
+uvicorn==0.34.0
+sentence-transformers==3.3.1
+# sentence-transformers leaves transformers/tokenizers unpinned; an
+# incompatible future pair can break the tokenizer path at runtime, so
+# both are pinned to the versions the test suite is verified against.
+transformers==4.57.6
+tokenizers==0.22.2
+faiss-cpu==1.10.0
+rank-bm25==0.2.2
+numpy==1.26.4
+pypdf==5.1.0
+pytest==8.3.4
+requests==2.32.3
+python-multipart==0.0.20
+faster-whisper==1.2.1
+# httpx is required by starlette's TestClient (used by the API tests);
+# without it, a clean install from this file cannot run the test suite.
+httpx==0.28.1
